@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import concurrent.futures as cf
+import gzip
 import json
 import re
 from collections import Counter
@@ -40,15 +41,33 @@ def discover(today: date, rescore_all: bool = False, only: str | None = None) ->
     searches = prefs.get("workday_searches") or [""]
     health, raw = {}, []
 
+    cache_dir = config.STATE.parent / "cache"
+
     def pull(emp):
+        """Live fetch; on failure fall back to the last good copy if it is under 14 days old."""
+        cache = cache_dir / f"{emp['slug']}.json.gz"
         try:
-            return emp, ats.fetch(emp, searches), None
+            jobs = ats.fetch(emp, searches)
+            if jobs:
+                cache.parent.mkdir(parents=True, exist_ok=True)
+                with gzip.open(cache, "wt", encoding="utf-8") as f:
+                    json.dump({"date": today.isoformat(), "jobs": jobs}, f)
+            return emp, jobs, None, ""
         except Exception as e:  # one broken board must not stop the run
-            return emp, [], str(e)[:100]
+            old = None
+            if cache.exists():
+                try:
+                    with gzip.open(cache, "rt", encoding="utf-8") as f:
+                        old = json.load(f)
+                except (OSError, ValueError):
+                    old = None
+            if old and (today - date.fromisoformat(old["date"])).days <= 14:
+                return emp, old["jobs"], None, old["date"]
+            return emp, [], str(e)[:100], ""
 
     with cf.ThreadPoolExecutor(8) as ex:
-        for emp, jobs, err in ex.map(pull, emps):
-            health[emp["name"]] = {"ats": emp["ats"], "postings": len(jobs), "error": err}
+        for emp, jobs, err, cached in ex.map(pull, emps):
+            health[emp["name"]] = {"ats": emp["ats"], "postings": len(jobs), "error": err, "cached": cached}
             raw += jobs
 
     state = _load(config.STATE, {})
@@ -58,7 +77,10 @@ def discover(today: date, rescore_all: bool = False, only: str | None = None) ->
         # cheap checks first, so the per-posting detail call is made only for plausible jobs
         pre = filters.hard_filter({**job, "description": ""}, prefs, today)
         if not pre and not job["description"]:
-            ats.enrich(job)
+            try:
+                ats.enrich(job)
+            except Exception:  # an odd detail payload must not stop the run
+                pass
         reasons = pre or filters.hard_filter(job, prefs, today)
         s = state.setdefault(job["id"], {"first_seen": today.isoformat(), "fp": fingerprint(job),
                                          "title": job["title"], "employer": job["employer"]})
@@ -97,10 +119,19 @@ def discover(today: date, rescore_all: bool = False, only: str | None = None) ->
     cands = cands[: prefs.get("max_candidates_per_run", 30)]
 
     rd = run_dir(today)
+    # a second run on the same day must not lose candidates that were already judged today
+    have = {j["id"] for j in cands}
+    judged = {x.get("id") for x in _load(rd / "scores.json", []) if isinstance(x, dict)}
+    cands += [j for j in _load(rd / "candidates.json", []) if j["id"] not in have and j["id"] in judged]
+
+    # tracked roles whose posting disappeared from a board that answered: probably closed
+    live, ok_emps = {j["id"] for j in raw}, {n for n, h in health.items() if not h["error"]}
+    gone = [r["id"] for r in tracked.values() if r["status"] in ("shortlisted", "packet_ready")
+            and r["employer"] in ok_emps and r["id"] not in live and r["ats"] != "search"]
     _dump(config.STATE, state)
     _dump(rd / "candidates.json", cands)
     report = {"date": today.isoformat(), "postings_read": len(raw), "passed_filters": len(merged),
-              "new_candidates": len(cands), "drop_reasons": dict(drops.most_common()), "health": health}
+              "new_candidates": len(have), "gone": gone, "drop_reasons": dict(drops.most_common()), "health": health}
     _dump(rd / "discover_report.json", report)
     return report
 
@@ -126,7 +157,19 @@ def apply_scores(today: date) -> list[dict]:
         raise SystemExit(f"{rd / 'scores.json'} not found. The judgement step writes it (see the runbook).")
     w, sc = prefs["scoring"]["weights"], prefs["scoring"]
     errors, results, rows = [], [], tracker.load()
+    if not isinstance(scores, list):
+        raise SystemExit("scores.json must be a list of objects")
+    seen_ids = set()
     for s in scores:
+        if not isinstance(s, dict):
+            errors.append("every entry must be an object")
+            continue
+        if s.get("id") in seen_ids:
+            errors.append(f"{s.get('id')}: scored twice")
+        seen_ids.add(s.get("id"))
+        if not isinstance(s.get("requirements"), list) or not s["requirements"]:
+            errors.append(f"{s.get('id')}: needs a non-empty requirements list")
+            s["requirements"] = []
         job = cands.get(s.get("id"))
         if not job:
             errors.append(f"{s.get('id')}: not in this run's candidates")
@@ -135,6 +178,14 @@ def apply_scores(today: date) -> list[dict]:
             if not isinstance(s.get("dims", {}).get(d), (int, float)) or not 1 <= s["dims"][d] <= 5:
                 errors.append(f"{s['id']}: dims.{d} must be 1 to 5")
         for r in s.get("requirements", []):
+            if not isinstance(r, dict) or not r.get("req"):
+                errors.append(f"{s['id']}: each requirement needs 'req' text")
+                continue
+            if r.get("tag") and r["tag"] not in prefs.get("gap_tags", [r["tag"]]):
+                errors.append(f"{s['id']}: unknown gap tag '{r['tag']}'")
+            if not isinstance(r.get("evidence", []), list):
+                errors.append(f"{s['id']}: evidence must be a list of profile line ids")
+                continue
             if r.get("status") not in ("met", "partial", "missing"):
                 errors.append(f"{s['id']}: requirement status must be met/partial/missing: {r.get('req')}")
             if r.get("status") in ("met", "partial") and not r.get("evidence"):
@@ -163,10 +214,13 @@ def apply_scores(today: date) -> list[dict]:
         res = {**s, "dims": dims, "score": total, "tier": tier, "missing_must": missing_must,
                "job": {k: job.get(k) for k in ("employer", "title", "location", "url", "ats", "posted_at",
                                                "salary", "family", "years_asked", "also_locations", "stale_days",
+                                               "visa_flag", "injection_flag",
                                                "repost_of_role_first_seen")}}
         results.append(res)
+        prev = rows.get(job["id"], {}).get("status", "found")
+        keep = prev not in ("found", "shortlisted", "skipped")  # never demote packet_ready, applied, ...
         tracker.upsert(rows, job, today, score=total,
-                       status="shortlisted" if tier != "skip" else "skipped",
+                       status=prev if keep else "shortlisted" if tier != "skip" else "skipped",
                        notes=(s.get("why") or "")[:160])
     tracker.save(rows)
     results.sort(key=lambda r: -r["score"])
@@ -217,7 +271,7 @@ def digest(today: date) -> str:
                  f"- {j['location']}" + (f" (also: {', '.join(j['also_locations'])})" if j.get("also_locations") else "")
                  + (f" | posted {j['posted_at']}" if j.get("posted_at") else "")
                  + (f" | pay: {j['salary']}" if j.get("salary") else ""),
-                 f"- Apply: {j['url']}",
+                 f"- Apply: {j.get('url', '')}",
                  "- Scores: " + ", ".join(f"{d} {r['dims'][d]}" for d in DIMS)
                  + (f" (skill capped from {r['skill_capped_from']} by the evidence)" if r.get("skill_capped_from") else ""),
                  f"- Why: {r.get('why', '')}"]
@@ -230,6 +284,10 @@ def digest(today: date) -> str:
             lines.append(f"- Repost: this role was first seen {j['repost_of_role_first_seen']}.")
         if j.get("stale_days"):
             lines.append(f"- Stale: open for {j['stale_days']} days. May be evergreen or already filled; check before investing time.")
+        if j.get("visa_flag"):
+            lines.append(f"- Visa: {j['visa_flag']}")
+        if j.get("injection_flag"):
+            lines.append("- Warning: the posting text contains instructions aimed at AI tools. Read it yourself.")
         if r.get("legitimacy") and r["legitimacy"] != "ok":
             lines.append(f"- Legitimacy doubt: {r['legitimacy']}")
         return lines + [""]
@@ -239,7 +297,7 @@ def digest(today: date) -> str:
                 "| Pre | Employer | Role | Location | Years asked | Link |", "|---|---|---|---|---|---|"]
         for j in cands:
             out.append(f"| {j['prescore']} | {j['employer']} | {j['title']} | {j['location'][:40]} | "
-                       f"{j['years_asked'] or ''} | [open]({j['url']}) |")
+                       f"{j['years_asked'] or ''} | [open]({j.get('url', '')}) |")
         out.append("")
     else:
         tiers = {t: [r for r in scored if r["tier"] == t] for t in ("apply", "maybe", "skip")}
@@ -261,8 +319,13 @@ def digest(today: date) -> str:
         if rest:
             out += [f"## Passed the filters, not yet judged ({len(rest)})", "",
                     "| Pre | Employer | Role | Location | Link |", "|---|---|---|---|---|"]
-            out += [f"| {j['prescore']} | {j['employer']} | {j['title']} | {j['location'][:40]} | [open]({j['url']}) |"
+            out += [f"| {j['prescore']} | {j['employer']} | {j['title']} | {j['location'][:40]} | [open]({j.get('url', '')}) |"
                     for j in rest] + [""]
+
+    if report.get("gone"):
+        rows = tracker.load()
+        out += ["## Probably closed", "", "Shortlisted roles no longer on the employer's board:", ""]
+        out += [f"- {rows[i]['employer']}: {rows[i]['role']}" for i in report["gone"] if i in rows] + [""]
 
     due = tracker.followups(today)
     out += [f"## Follow-ups due ({len(due)})", ""]
@@ -285,6 +348,10 @@ def digest(today: date) -> str:
     if report.get("drop_reasons"):
         out += ["", "## Dropped by hard filters", ""]
         out += [f"- {k}: {v}" for k, v in report["drop_reasons"].items()]
+    stale_src = {k: v["cached"] for k, v in report.get("health", {}).items() if v.get("cached")}
+    if stale_src:
+        out += ["", "## Sources served from the last good copy", ""]
+        out += [f"- {k}: copy from {d}" for k, d in stale_src.items()]
     bad = {k: v for k, v in report.get("health", {}).items() if v["error"]}
     if bad:
         out += ["", "## Sources that failed this run", ""]

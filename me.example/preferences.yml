@@ -41,7 +41,7 @@ locations:                         # a posting's location must match one entry (
   - {name: UK, match: [UK, United Kingdom, London, Manchester, Edinburgh, Leeds, Bristol, Birmingham, England, Scotland], min_pay: "GBP 41,700/year (Skilled Worker floor; lower new-entrant rate under 26)"}
   - {name: Ireland, match: [Ireland, Dublin], min_pay: "EUR 40,000/year"}
   - {name: Germany, match: [Germany, Berlin, Frankfurt, Munich, Hamburg], min_pay: "EUR 45,934/year (Blue Card reduced)"}
-  - {name: Georgia and Armenia, match: [Georgia, Tbilisi, Armenia, Yerevan], min_pay: "USD 2,500/month"}
+  - {name: Georgia and Armenia, match: [Georgia, Tbilisi, Armenia, Yerevan], exclude: [Atlanta, Alpharetta, United States, USA, US, GA, California, New York, Florida, Texas, Boston, Pennsylvania, Virginia, Carolina, Illinois, Washington], min_pay: "USD 2,500/month"}
   - {name: Central Asia, match: [Kazakhstan, Almaty, Astana, Uzbekistan, Tashkent], min_pay: "USD 2,500/month"}
 remote_regions: [EMEA, Europe, Worldwide, Global, Anywhere, MENA, Middle East, GCC, CIS, Caucasus, Turkey]
 
@@ -53,8 +53,8 @@ workday_searches: [credit risk, risk analytics, data scientist, financial risk, 
 
 filters:
   max_years_required: 4
-  max_age_days: 180                # hard drop; boards often leave real roles open for months
-  stale_after_days: 45             # flagged in the digest and ranked lower, not dropped
+  max_age_days: 0                  # 0 = never drop on age: a posting on the employer's own board is open
+  stale_after_days: 60             # older postings are flagged and ranked lower (often evergreen roles)
   languages_lacking: [Arabic, German, Dutch, French, Spanish, Italian, Portuguese, Georgian, Armenian,
                       Kazakh, Uzbek, Polish, Mandarin, Cantonese, Japanese, Korean, Hebrew, Swedish, Danish,
                       Norwegian, Finnish, Czech, Greek, Hungarian, Romanian]
@@ -63,13 +63,16 @@ filters:
                   recruiter, counsel, legal, marketing, accountant, controller, collections, engineering manager,
                   senior manager, executive assistant, handler, program manager, programme manager, CRM]
   citizens_only_patterns:
-    - '\b(UAE|Saudi|Emirati|Qatari|Bahraini|Kuwaiti|Omani)\s+nationals?\b'
+    - '\b(UAE|Saudi|Emirati|Qatari|Bahraini|Kuwaiti|Omani|GCC)\s+nationals?\b'
     - '\bEmirati[sz]ation\b|\bSaudi[sz]ation\b|\bQatari[sz]ation\b'
     - '\bsecurity clearance\b|\bSC cleared\b'
     - 'must be (a |an )?(US|U\.S\.|British|UK|EU) (citizen|national)'
+  no_sponsorship_patterns:         # dropped unless the same sentence offers sponsorship somewhere
     - '(must|need to|should) (already |currently )?(have|hold|possess) (the |a |an )?(existing |valid |full |unrestricted |legal )?(right|permission|eligibility|authori[sz]ation) to work'
     - "(unable|not able|cannot|can't|do not|don't|won't|will not) (to )?(be able to )?(offer|provide|support)?\\s*(visa |work permit )?sponsor"
     - 'no (visa )?sponsorship'
+    - 'without (the need for )?(visa )?sponsorship'
+    - '(existing|current|valid|full) right to work'
   scam_patterns:
     - '(registration|processing|training|application) fee'
     - 'pay (a |an )?(deposit|fee) (to|before)'

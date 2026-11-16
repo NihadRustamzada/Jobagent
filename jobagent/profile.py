@@ -26,10 +26,15 @@ def load(path: Path) -> dict:
             parts = [p.strip() for p in m.group(2).split("|")]
             parts += [""] * (4 - len(parts))
             entry = m.group(1)
+            if entry in entries:
+                raise ValueError(f"duplicate profile entry id {entry}")
             entries[entry] = {"id": entry, "section": section, "org": parts[0], "role": parts[1],
                               "dates": parts[2], "location": parts[3], "lines": []}
             continue
         m = _LINE.match(raw)
+        if not m and re.match(r"^\s*-\s*\[", raw):
+            raise ValueError(f"malformed profile line (expected '- [ID] (confirmed) text' or "
+                             f"'- [ID] (needs-proof: reason) text'): {raw[:80]}")
         if m:
             lid, status, why, text = m.groups()
             if lid in lines:

@@ -33,7 +33,12 @@ Design choices that matter:
   cannot leak into a CV.
 - **The digest is also a market sensor.** Every judged requirement is tagged, so the digest shows
   which skills postings keep asking for that the profile cannot yet evidence.
-- **Postings are untrusted input.** Instructions embedded in a job description are ignored.
+- **Postings are untrusted input.** Instructions embedded in a job description are ignored, and
+  postings containing text aimed at AI tools are flagged.
+- **Built to survive bad days.** A malformed posting is skipped, a rate-limited board is retried
+  slowly and then served from its last good copy (up to 14 days old), a posting that vanishes from
+  a board is reported as probably closed, and rerunning on the same day never loses judgements
+  or demotes an application's status.
 
 ## Setup
 
@@ -84,10 +89,22 @@ python -m jobagent stats
  "skills": [{"text": "...", "sources": ["S2"]}]}
 ```
 
+## Testing
+
+```bash
+python -m unittest discover -s tests   # offline: filters, fabrication attacks, full cycle
+python -m jobagent probe                # live: every endpoint
+```
+
 ## Limits
 
 - Open endpoints are conveniences, not contracts, and can change. `probe` shows what broke.
 - Workday rate-limits cloud IP addresses (HTTP 429); it works more often from a home connection.
+  Workable allows only a few calls per minute, so those boards are read slowly.
+- Posting age is not a drop reason (employers keep real roles open for months); postings older
+  than `stale_after_days` are flagged and ranked lower.
+- "No visa sponsorship" and "must already have the right to work" are drop reasons. A sentence
+  that offers sponsorship in some locations is kept and flagged instead.
 - Oracle, SuccessFactors, Taleo and custom portals have no open endpoint. Those employers are
   listed as `ats: search` and covered by web searches during the judged run, or by hand.
 - The fabrication check reduces errors; it cannot catch every rewording. Read every CV before sending.
