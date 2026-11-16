@@ -1,0 +1,132 @@
+# Employers and where their postings can be read for free.
+# ats: greenhouse | lever | ashby | smartrecruiters | workable | recruitee | workday | search
+# "search" = no open endpoint; covered by the saved searches in the weekly runbook.
+# verified: date the endpoint last returned postings (python -m jobagent probe).
+# Slugs can collide with unrelated companies: confirm a new one by reading its titles.
+
+employers:
+  # --- Gulf fintech
+  - {name: Tamara, ats: greenhouse, token: tamara, group: gulf-fintech, verified: 2026-11-16}
+  - {name: Ziina, ats: ashby, token: ziina, group: gulf-fintech, verified: 2026-11-16}
+  - {name: Lean Technologies, ats: ashby, token: leantech, group: gulf-fintech, verified: 2026-11-16}
+  - {name: Careem, ats: greenhouse, token: careem, group: gulf-fintech, verified: 2026-11-16}
+  - {name: Foodics, ats: workable, token: foodics, group: gulf-fintech, verified: 2026-11-16}
+  - {name: Salla, ats: workable, token: salla, group: gulf-fintech, verified: 2026-11-16}
+  - {name: Tabby, ats: search, group: gulf-fintech}
+  - {name: Wio Bank, ats: search, group: gulf-fintech}
+  - {name: Mamo, ats: search, group: gulf-fintech}
+
+  # --- Credit, risk and decisioning vendors
+  - {name: Quantexa, ats: ashby, token: quantexa, group: risk-vendor, verified: 2026-11-16}
+  - {name: ComplyAdvantage, ats: greenhouse, token: complyadvantage, group: risk-vendor, verified: 2026-11-16}
+  - {name: Feedzai, ats: greenhouse, token: feedzai, group: risk-vendor, verified: 2026-11-16}
+  - {name: Taktile, ats: ashby, token: taktile, group: risk-vendor, verified: 2026-11-16}
+  - {name: Oscilar, ats: ashby, token: oscilar, group: risk-vendor, verified: 2026-11-16}
+  - {name: Sardine, ats: ashby, token: sardine, group: risk-vendor, verified: 2026-11-16}
+  - {name: Regnology, ats: search, group: risk-vendor}
+  - {name: SAS, ats: search, group: risk-vendor}
+  - name: Moody's
+    ats: workday
+    host: moodys.wd5.myworkdayjobs.com
+    tenant: moodys
+    site: Moodys
+    group: risk-vendor   # unverified: returned HTTP 422 on 2026-11-16, site name may differ
+
+  # --- Lenders and fintechs, UK and Europe
+  - {name: Adyen, ats: greenhouse, token: adyen, group: europe-fintech, verified: 2026-11-16}
+  - {name: Mollie, ats: ashby, token: mollie, group: europe-fintech, verified: 2026-11-16}
+  - {name: Zopa, ats: lever, token: zopa, group: europe-fintech, verified: 2026-11-16}
+  - {name: Lendable, ats: ashby, token: lendable, group: europe-fintech, verified: 2026-11-16}
+  - {name: Funding Circle, ats: ashby, token: fundingcircle, group: europe-fintech, verified: 2026-11-16}
+  - {name: OakNorth, ats: ashby, token: oaknorth, group: europe-fintech, verified: 2026-11-16}
+  - {name: Monzo, ats: greenhouse, token: monzo, group: europe-fintech, verified: 2026-11-16}
+  - {name: Tide, ats: greenhouse, token: tide, group: europe-fintech, verified: 2026-11-16}
+  - {name: Capital on Tap, ats: greenhouse, token: capitalontap, group: europe-fintech, verified: 2026-11-16}
+  - {name: Abound, ats: ashby, token: abound, group: europe-fintech, verified: 2026-11-16}
+  - {name: ClearBank, ats: ashby, token: clearbank, group: europe-fintech, verified: 2026-11-16}
+  - {name: Kroo, ats: workable, token: kroo, group: europe-fintech, verified: 2026-11-16}
+  - {name: Cleo, ats: greenhouse, token: cleo, group: europe-fintech, verified: 2026-11-16}
+  - {name: Marshmallow, ats: ashby, token: marshmallow, group: europe-fintech, verified: 2026-11-16}
+  - {name: Wise, ats: smartrecruiters, token: wise, group: europe-fintech, verified: 2026-11-16}
+  - {name: N26, ats: greenhouse, token: n26, group: europe-fintech, verified: 2026-11-16}
+  - {name: Raisin, ats: greenhouse, token: raisin, group: europe-fintech, verified: 2026-11-16}
+  - {name: Solaris, ats: greenhouse, token: solarisbank, group: europe-fintech, verified: 2026-11-16}
+  - {name: Bitpanda, ats: greenhouse, token: bitpanda, group: europe-fintech, verified: 2026-11-16}
+  - {name: SumUp, ats: greenhouse, token: sumup, group: europe-fintech, verified: 2026-11-16}
+  - {name: Qonto, ats: ashby, token: qonto, group: europe-fintech, verified: 2026-11-16}
+  - {name: Pleo, ats: ashby, token: pleo, group: europe-fintech, verified: 2026-11-16}
+  - {name: Younited, ats: lever, token: younited, group: europe-fintech, verified: 2026-11-16}
+  - {name: Airwallex, ats: ashby, token: airwallex, group: europe-fintech, verified: 2026-11-16}
+  - {name: Nium, ats: lever, token: nium, group: europe-fintech, verified: 2026-11-16}
+  - {name: Thunes, ats: greenhouse, token: thunes, group: europe-fintech, verified: 2026-11-16}
+  - {name: Payoneer, ats: greenhouse, token: payoneer, group: europe-fintech, verified: 2026-11-16}
+  - {name: Zanders, ats: search, group: europe-fintech}
+  - {name: ABN AMRO, ats: search, group: europe-bank}
+  - {name: Rabobank, ats: search, group: europe-bank}
+  - name: ING
+    ats: workday
+    host: ing.wd3.myworkdayjobs.com
+    tenant: ing
+    site: ICSGBLCOR
+    group: europe-bank   # unverified: rate-limited (HTTP 429) on 2026-11-16
+
+  # --- Emerging-market credit
+  - {name: Tala, ats: lever, token: tala, group: em-credit, verified: 2026-11-16}
+  - {name: Nubank, ats: ashby, token: nubank, group: em-credit, verified: 2026-11-16}
+  - {name: Upstart, ats: greenhouse, token: upstart, group: em-credit, verified: 2026-11-16}
+
+  # --- Caucasus and Central Asia
+  - {name: TBC Bank Group, ats: smartrecruiters, token: tbcbank, group: caucasus, verified: 2026-11-16}
+  - {name: TBC Uzbekistan, ats: ashby, token: tbc, group: caucasus, verified: 2026-11-16}
+  - {name: Bank of Georgia, ats: smartrecruiters, token: bankofgeorgia, group: caucasus, verified: 2026-11-16}
+  - {name: Kaspi, ats: search, group: caucasus}
+  - {name: Halyk, ats: search, group: caucasus}
+  - {name: AFSA, ats: search, group: caucasus}
+
+  # --- Consulting
+  - name: PwC
+    ats: workday
+    host: pwc.wd3.myworkdayjobs.com
+    tenant: pwc
+    site: Global_Experienced_Careers
+    group: consulting
+    verified: 2026-11-16
+  - name: Oliver Wyman (Marsh McLennan)
+    ats: workday
+    host: mmc.wd1.myworkdayjobs.com
+    tenant: mmc
+    site: MMC
+    group: consulting    # unverified: rate-limited (HTTP 429) on 2026-11-16
+  - name: Accenture
+    ats: workday
+    host: accenture.wd103.myworkdayjobs.com
+    tenant: accenture
+    site: AccentureCareers
+    group: consulting    # unverified: rate-limited (HTTP 429) on 2026-11-16
+  - {name: Deloitte Middle East, ats: search, group: consulting}
+  - {name: EY MENA, ats: search, group: consulting}
+  - {name: KPMG Lower Gulf, ats: search, group: consulting}
+
+  # --- Gulf banks (Oracle, SuccessFactors or custom portals: search only)
+  - {name: Emirates NBD, ats: search, group: gulf-bank}
+  - {name: First Abu Dhabi Bank, ats: search, group: gulf-bank}
+  - {name: ADCB, ats: search, group: gulf-bank}
+  - {name: Mashreq, ats: search, group: gulf-bank}
+  - {name: Dubai Islamic Bank, ats: search, group: gulf-bank}
+  - {name: RAKBANK, ats: search, group: gulf-bank}
+  - {name: Commercial Bank of Dubai, ats: search, group: gulf-bank}
+  - {name: HSBC Middle East, ats: search, group: gulf-bank}
+  - {name: Standard Chartered, ats: search, group: gulf-bank}
+
+  # --- Forward-deployed / solutions engineering (the 18 to 36 month destination)
+  - {name: Palantir, ats: lever, token: palantir, group: fde, verified: 2026-11-16}
+  - {name: Sierra, ats: ashby, token: sierra, group: fde, verified: 2026-11-16}
+  - {name: Decagon, ats: ashby, token: decagon, group: fde, verified: 2026-11-16}
+  - {name: Harvey, ats: ashby, token: harvey, group: fde, verified: 2026-11-16}
+  - {name: Rogo, ats: ashby, token: rogo, group: fde, verified: 2026-11-16}
+  - {name: Cohere, ats: ashby, token: cohere, group: fde, verified: 2026-11-16}
+  - {name: ElevenLabs, ats: ashby, token: elevenlabs, group: fde, verified: 2026-11-16}
+  - {name: n8n, ats: ashby, token: n8n, group: fde, verified: 2026-11-16}
+  - {name: Glean, ats: greenhouse, token: gleanwork, group: fde, verified: 2026-11-16}
+  - {name: Databricks, ats: greenhouse, token: databricks, group: fde, verified: 2026-11-16}
+  - {name: Lovable, ats: ashby, token: lovable, group: fde, verified: 2026-11-16}

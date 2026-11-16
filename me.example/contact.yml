@@ -1,0 +1,6 @@
+# Appears only at the top of rendered CVs. Never copied into digests, logs or the tracker.
+name: Your Name
+city: City, Country
+phone: ""
+email: ""        # a separate address for applications is safer
+links: {}        # e.g. {linkedin: "linkedin.com/in/you", github: "github.com/you"}

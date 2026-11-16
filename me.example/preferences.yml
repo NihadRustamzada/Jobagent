@@ -1,0 +1,90 @@
+# What to look for. Copy to me/preferences.yml and edit. Nothing here is sent anywhere.
+
+weekly_application_cap: 8          # quality over volume
+max_candidates_per_run: 30         # how many filtered jobs the judgement step reads
+
+role_families:                     # a title must match one family to be considered
+  credit_ds:
+    priority: 1.0
+    title_keywords: [credit risk, risk analyst, risk analytics, risk modelling, risk modeling, risk model,
+                     data scientist, data science, credit analyst, credit strategy, credit scoring, scoring,
+                     decision scientist, decision science, underwriting, credit, fraud analyst, risk strategy,
+                     risk data, quantitative analyst, analytics]
+    desc_keywords: [credit scoring, scorecard, PD, LGD, IFRS 9, default, underwriting, gradient boosting,
+                    XGBoost, logistic regression, SQL, Python, model monitoring, credit bureau, BNPL,
+                    risk models, machine learning, portfolio, delinquency]
+  risk_consulting:
+    priority: 0.9
+    title_keywords: [financial risk, risk consulting, risk advisory, regulatory, prudential, FS Risk,
+                     financial services risk, risk consultant, Basel, IFRS 9, risk & regulatory,
+                     risk and regulatory, model validation, model risk, risk management]
+    desc_keywords: [Basel, ICAAP, ILAAP, stress testing, IFRS 9, capital adequacy, RWA, regulatory,
+                    central bank, supervision, credit risk, model validation, clients, prudential]
+  fde:
+    priority: 0.8
+    title_keywords: [forward deployed, forward-deployed, solutions engineer, solution engineer,
+                     implementation engineer, implementation consultant, implementation specialist,
+                     deployment strategist, solutions consultant, customer engineer, applied AI,
+                     AI engineer, agent engineer, solutions analyst, technical consultant, implementation]
+    desc_keywords: [customers, deploy, Python, SQL, LLM, agents, workflows, integration, API, prototype,
+                    financial services, banks, stakeholders, evaluation]
+  ai_governance:
+    priority: 0.7
+    title_keywords: [AI governance, AI risk, AI assurance, responsible AI, model governance, AI audit]
+    desc_keywords: [model risk, validation, governance, EU AI Act, SR 11-7, audit, controls, LLM, evaluation]
+
+locations:                         # a posting's location must match one entry (or be remote in a listed region)
+  - {name: UAE, match: [UAE, United Arab Emirates, Dubai, Abu Dhabi, DIFC, ADGM], min_pay: "AED 17,000/month"}
+  - {name: Saudi Arabia, match: [Saudi Arabia, KSA, Riyadh, Jeddah], min_pay: "SAR 17,000/month"}
+  - {name: Qatar and Bahrain, match: [Qatar, Doha, Bahrain, Manama], min_pay: "USD 4,600/month"}
+  - {name: Netherlands, match: [Netherlands, Amsterdam, Rotterdam, Utrecht, The Hague], min_pay: "EUR 3,122/month (reduced permit floor)"}
+  - {name: UK, match: [UK, United Kingdom, London, Manchester, Edinburgh, Leeds, Bristol, Birmingham, England, Scotland], min_pay: "GBP 41,700/year (Skilled Worker floor; lower new-entrant rate under 26)"}
+  - {name: Ireland, match: [Ireland, Dublin], min_pay: "EUR 40,000/year"}
+  - {name: Germany, match: [Germany, Berlin, Frankfurt, Munich, Hamburg], min_pay: "EUR 45,934/year (Blue Card reduced)"}
+  - {name: Georgia and Armenia, match: [Georgia, Tbilisi, Armenia, Yerevan], min_pay: "USD 2,500/month"}
+  - {name: Central Asia, match: [Kazakhstan, Almaty, Astana, Uzbekistan, Tashkent], min_pay: "USD 2,500/month"}
+remote_regions: [EMEA, Europe, Worldwide, Global, Anywhere, MENA, Middle East, GCC, CIS, Caucasus, Turkey]
+
+excluded_employers: []             # names; matched as whole words against the employer
+
+contacts: []                       # - {employer: "Name", who: "who you know there"}  -> "warm path" in the digest
+
+workday_searches: [credit risk, risk analytics, data scientist, financial risk, model validation, forward deployed]
+
+filters:
+  max_years_required: 4
+  max_age_days: 180                # hard drop; boards often leave real roles open for months
+  stale_after_days: 45             # flagged in the digest and ranked lower, not dropped
+  languages_lacking: [Arabic, German, Dutch, French, Spanish, Italian, Portuguese, Georgian, Armenian,
+                      Kazakh, Uzbek, Polish, Mandarin, Cantonese, Japanese, Korean, Hebrew, Swedish, Danish,
+                      Norwegian, Finnish, Czech, Greek, Hungarian, Romanian]
+  title_exclude: [head, director, principal, staff, VP, SVP, AVP, vice president, chief, lead, partner,
+                  intern, internship, working student, werkstudent, apprentice, sales, account executive,
+                  recruiter, counsel, legal, marketing, accountant, controller, collections, engineering manager,
+                  senior manager, executive assistant, handler, program manager, programme manager, CRM]
+  citizens_only_patterns:
+    - '\b(UAE|Saudi|Emirati|Qatari|Bahraini|Kuwaiti|Omani)\s+nationals?\b'
+    - '\bEmirati[sz]ation\b|\bSaudi[sz]ation\b|\bQatari[sz]ation\b'
+    - '\bsecurity clearance\b|\bSC cleared\b'
+    - 'must be (a |an )?(US|U\.S\.|British|UK|EU) (citizen|national)'
+    - '(must|need to|should) (already |currently )?(have|hold|possess) (the |a |an )?(existing |valid |full |unrestricted |legal )?(right|permission|eligibility|authori[sz]ation) to work'
+    - "(unable|not able|cannot|can't|do not|don't|won't|will not) (to )?(be able to )?(offer|provide|support)?\\s*(visa |work permit )?sponsor"
+    - 'no (visa )?sponsorship'
+  scam_patterns:
+    - '(registration|processing|training|application) fee'
+    - 'pay (a |an )?(deposit|fee) (to|before)'
+  signals:
+    junior: [junior, associate, analyst, graduate, entry]
+    senior: [senior, sr, manager, expert, II, III]
+    positive: [visa sponsorship, relocation, sponsor, relocation package, mentorship]
+    negative: [regulatory reporting, dashboards, Power BI, data entry, cold calling]
+
+scoring:                           # the judgement step gives 1 to 5 per dimension; code computes the total
+  weights: {skill: 0.30, seniority: 0.20, pay: 0.20, visa: 0.15, build: 0.15}
+  packet_threshold: 4.0            # prepare a packet at or above this
+  maybe_threshold: 3.5
+  missing_must_cap: 3.9            # a missing must-have keeps a job out of the packet tier
+
+gap_tags: [sql, python, ml_modelling, credit_scoring, ifrs9_ecl, basel_capital, model_validation, statistics,
+           cloud_data_eng, bi_dashboards, llm_ai_engineering, stakeholder_client, domain_banking,
+           years_experience, degree, language, work_authorisation, other]

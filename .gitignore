@@ -1,0 +1,9 @@
+# PRIVATE DATA. This repository is public, so everything personal stays out of git:
+# profile, contact details, answer bank, preferences, tracker, digests and packets.
+# Once the repository is private, delete the next line to keep history of every CV sent.
+me/
+
+__pycache__/
+*.pyc
+.venv/
+~$*.docx
